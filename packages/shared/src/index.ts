@@ -28,6 +28,12 @@ export const voices = [
   'Harshad',
 ] as const;
 export const languageSchema = z.enum(languages);
+export const callingTimeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Enter a valid time.');
+export function isWithinCallingWindow(time: string, start: string, end: string) {
+  if (start === end) return false;
+  if (start < end) return time >= start && time < end;
+  return time >= start || time < end;
+}
 const text = z.string().trim().max(5000);
 const list = z.array(text).max(50).default([]);
 const sensitive =
@@ -75,14 +81,8 @@ export const campaignSchema = z
     recording: z.literal(false).default(false),
     schedule: z
       .object({
-        start: z
-          .string()
-          .regex(/^\d{2}:\d{2}$/)
-          .default('09:00'),
-        end: z
-          .string()
-          .regex(/^\d{2}:\d{2}$/)
-          .default('21:00'),
+        start: callingTimeSchema.default('09:00'),
+        end: callingTimeSchema.default('21:00'),
         timezone: z.literal('Asia/Kolkata').default('Asia/Kolkata'),
         max_attempts: z.number().int().min(1).max(2).default(2),
         retry_gap_min: z.number().int().min(30).default(60),
@@ -150,20 +150,11 @@ export const campaignSchema = z
     sample: z.boolean().default(false),
   })
   .superRefine((c, ctx) => {
-    const minute = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3));
-    const a = minute(c.schedule.start),
-      b = minute(c.schedule.end);
-    if (
-      a < 540 ||
-      b > 1260 ||
-      a >= b ||
-      Number(c.schedule.start.slice(3)) > 59 ||
-      Number(c.schedule.end.slice(3)) > 59
-    )
+    if (c.schedule.start === c.schedule.end)
       ctx.addIssue({
         code: 'custom',
         path: ['schedule'],
-        message: 'Window must be within 09:00–21:00 IST',
+        message: 'Calling start and end times must differ.',
       });
     const questions = c.type === 'hr' ? c.screening_questions : c.qualification_questions;
     if (new Set(questions.map((q) => q.field_key)).size !== questions.length)

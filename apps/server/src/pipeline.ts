@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { Campaign, CallResult, Outcome, Turn } from '../../../packages/shared/src/index.js';
+import { isWithinCallingWindow, type Campaign, type CallResult, type Outcome, type Turn } from '../../../packages/shared/src/index.js';
 import type {
   DialogueClient,
   SttClient,
@@ -600,7 +600,7 @@ export class ConversationPipeline {
             minute: '2-digit',
             hourCycle: 'h23',
           }).format(parsed.date);
-          if (clock < this.campaign.schedule.start || clock >= this.campaign.schedule.end)
+          if (!isWithinCallingWindow(clock, this.campaign.schedule.start, this.campaign.schedule.end))
             throw new Error('Ask for a time inside the calling window');
           this.callbackAt = parsed.date.toISOString();
           this.outcome = 'CALLBACK';

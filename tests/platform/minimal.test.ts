@@ -58,7 +58,7 @@ describe('minimal campaign expansion', () => {
     expect(c.salary_range_text).toBe('');
     expect(c.fact_sheet).not.toContain('salary');
   });
-  it('refuses sensitive questions and wider calling hours', () => {
+  it('refuses sensitive questions and invalid calling hours', () => {
     const d = {
       ...newMinimalDraft('hr'),
       company_name: 'Synthetic studio',
@@ -70,9 +70,12 @@ describe('minimal campaign expansion', () => {
       ...newMinimalDraft('sales'),
       company_name: 'Synthetic studio',
       offering: 'A workspace',
-      start: '08:00',
+      start: '25:00',
     };
     expect(() => expandToFullConfig(sales)).toThrow();
+    expect(
+      campaignDraftMinimalSchema.safeParse({ ...sales, start: '21:00', end: '05:00' }).success,
+    ).toBe(true);
   });
   it('does not convert a chosen destination into an automatic message claim', () => {
     const d = {

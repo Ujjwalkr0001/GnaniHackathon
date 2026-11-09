@@ -611,8 +611,6 @@ function StudioForm({ workflow }: { workflow: WorkflowId }) {
                     <Field label="Calling starts">
                       <Input
                         type="time"
-                        min="09:00"
-                        max="20:59"
                         value={draft.start}
                         onChange={(e) => set('start', e.target.value)}
                       />
@@ -620,15 +618,13 @@ function StudioForm({ workflow }: { workflow: WorkflowId }) {
                     <Field label="Calling ends">
                       <Input
                         type="time"
-                        min="09:01"
-                        max="21:00"
                         value={draft.end}
                         onChange={(e) => set('end', e.target.value)}
                       />
                     </Field>
                   </div>
                   <p className="helper">
-                    Outside these hours, calls wait for the next permitted window.
+                    If the end time is earlier, the window continues after midnight. Call only at times the person agreed to.
                   </p>
                 </Disclosure>
                 <label className="consent">

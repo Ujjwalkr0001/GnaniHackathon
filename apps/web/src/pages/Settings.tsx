@@ -357,9 +357,9 @@ export default function Settings() {
           )}
           <Disclosure title="Calling rules & draft data">
             <p className="text-small">
-              Campaigns use stricter hours within 09:00–21:00 IST. Do-not-call and calling-limit
-              checks still apply. The app does not scrub national DND registries. HR results are
-              advisory; humans decide.
+              Choose calling hours that match each recipient’s consent and preferences, including
+              overnight windows when appropriate. Do-not-call and calling-limit checks still apply.
+              The app does not scrub national DND registries. HR results are advisory; humans decide.
             </p>
             <p className="text-small">
               Unfinished drafts, including pasted contacts, are saved on this device. They are

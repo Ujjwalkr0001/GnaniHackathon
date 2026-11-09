@@ -9,11 +9,11 @@ describe('campaign contract', () => {
       expect(c.recording).toBe(false);
     }
   });
-  it('rejects wider calling windows and recording without consent implementation', () => {
+  it('accepts overnight calling windows and rejects recording without consent implementation', () => {
     const c = defaultCampaign();
     expect(
-      campaignSchema.safeParse({ ...c, schedule: { ...c.schedule, start: '08:59' } }).success,
-    ).toBe(false);
+      campaignSchema.safeParse({ ...c, schedule: { ...c.schedule, start: '21:00', end: '05:00' } }).success,
+    ).toBe(true);
     expect(campaignSchema.safeParse({ ...c, recording: true }).success).toBe(false);
   });
 });

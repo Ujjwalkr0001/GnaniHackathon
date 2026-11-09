@@ -42,7 +42,7 @@ AICaller/
    provider has been tested successfully.
 6. Use a consented, verified test phone number in international format (for
    example, `+91...`). Confirm consent and place one HR test call inside the
-   configured 09:00–21:00 Asia/Kolkata calling window. A Twilio trial account
+   configured Asia/Kolkata calling window. Overnight windows are supported. A Twilio trial account
    can call only verified destinations. Inspect the call result and Twilio
    debugger if no ring arrives.
 

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   campaignSchema,
+  callingTimeSchema,
   defaultCampaign,
   languageSchema,
   questionSchema,
@@ -55,13 +56,14 @@ export const minimalBaseSchema = z.object({
   resume_value: z.string().trim().max(500).default(''),
   pay_range: z.string().trim().max(500).default(''),
   consent: z.boolean().default(false),
-  start: z.string().default('10:00'),
-  end: z.string().default('19:00'),
+  start: callingTimeSchema.default('10:00'),
+  end: callingTimeSchema.default('19:00'),
 });
 export const campaignDraftMinimalSchema = minimalBaseSchema.superRefine((d, ctx) => {
   const issue = (path: string, message: string) =>
     ctx.addIssue({ code: 'custom', path: [path], message });
   if (d.company_name.length < 2) issue('company_name', 'Enter your company name.');
+  if (d.start === d.end) issue('end', 'Calling start and end times must differ.');
   if (d.type === 'sales' && d.offering.length < 3)
     issue('offering', 'Describe the offer in a few words.');
   if (d.type === 'hr' && !d.job_title) issue('job_title', 'Enter the job title.');

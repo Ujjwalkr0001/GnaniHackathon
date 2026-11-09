@@ -91,12 +91,36 @@ describe('ComplianceGate', () => {
       '2026-11-08T03:30:00.000Z',
     );
   });
-  it('schema rejects invalid minutes, widened window and duplicate field keys', () => {
+  it('allows calls through midnight and schedules the next overnight window', () => {
+    const overnight = { ...c, schedule: { ...c.schedule, start: '21:00', end: '05:00' } };
+    for (const [time, allowed] of [
+      ['2026-11-07T15:29:00Z', false],
+      ['2026-11-07T15:30:00Z', true],
+      ['2026-11-07T23:29:00Z', true],
+      ['2026-11-07T23:30:00Z', false],
+    ] as const)
+      expect(
+        complianceGate(overnight, '+12025550101', { ...context, now: new Date(time) }).length === 0,
+      ).toBe(allowed);
+    expect(nextCallingWindow(overnight, new Date('2026-11-08T00:30:00Z')).toISOString()).toBe(
+      '2026-11-08T15:30:00.000Z',
+    );
+  });
+  it('schema accepts late and overnight windows but rejects invalid times', () => {
     expect(
       campaignSchema.safeParse({ ...c, schedule: { ...c.schedule, start: '09:90' } }).success,
     ).toBe(false);
     expect(
       campaignSchema.safeParse({ ...c, schedule: { ...c.schedule, end: '22:00' } }).success,
+    ).toBe(true);
+    expect(
+      campaignSchema.safeParse({ ...c, schedule: { ...c.schedule, start: '21:00', end: '05:00' } }).success,
+    ).toBe(true);
+    expect(
+      campaignSchema.safeParse({ ...c, schedule: { ...c.schedule, start: '24:00' } }).success,
+    ).toBe(false);
+    expect(
+      campaignSchema.safeParse({ ...c, schedule: { ...c.schedule, end: c.schedule.start } }).success,
     ).toBe(false);
   });
 });

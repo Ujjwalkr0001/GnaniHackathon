@@ -638,8 +638,6 @@ function WizardForm({ type, editingId }: { type: 'sales' | 'hr'; editingId?: str
                         <Field label="Start time">
                           <Input
                             type="time"
-                            min="09:00"
-                            max="20:59"
                             value={draft.start}
                             onChange={(e) => set('start', e.target.value)}
                           />
@@ -647,8 +645,6 @@ function WizardForm({ type, editingId }: { type: 'sales' | 'hr'; editingId?: str
                         <Field label="End time">
                           <Input
                             type="time"
-                            min="09:01"
-                            max="21:00"
                             value={draft.end}
                             onChange={(e) => set('end', e.target.value)}
                           />
@@ -1037,8 +1033,8 @@ function FineTune({
           ))}
         </div>
         <p className="helper">
-          AI disclosure and recording-off settings always apply. Calling hours stay within
-          09:00–21:00 IST.
+          AI disclosure and recording-off settings always apply. If the end time is earlier,
+          the calling window continues after midnight.
         </p>
       </div>
     </Disclosure>

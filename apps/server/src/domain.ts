@@ -1,6 +1,7 @@
 import { parsePhoneNumberFromString } from 'libphonenumber-js/max';
 import { createHash } from 'node:crypto';
 import {
+  isWithinCallingWindow,
   stages,
   type Campaign,
   type CallResult,
@@ -39,7 +40,7 @@ export function complianceGate(c: Campaign, phone: string, x: GateContext): stri
     !c.compliance.allowlist.map(normalizePhone).includes(normalizePhone(phone))
   )
     reasons.push('Number is not test-allowlisted');
-  if (parts < c.schedule.start || parts >= c.schedule.end || parts < '09:00' || parts >= '21:00')
+  if (!isWithinCallingWindow(parts, c.schedule.start, c.schedule.end))
     reasons.push('Outside calling window (IST)');
   if (x.suppressed) reasons.push('Suppressed: do not call');
   if (x.duplicate) reasons.push('Duplicate or active call');

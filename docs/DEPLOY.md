@@ -1,8 +1,10 @@
 # Deployment
 
+The active deployment is on Render. Follow [the Render deployment guide](../deploy/render/README.md). GitHub Actions runs CI checks; Render deploys from the connected repository. The Fly.io plan below is retained as historical design notes and is not an active deployment workflow.
+
 ## Status
 
-Local Postgres migration, app build, Docker build and local container smoke test were exercised on 7 November 2026. **Public staging/prod deployment: NOT RUN.** No Fly account/token, managed database, Gnani, dialogue or Twilio credentials were configured. A public URL is not available. This file is an executable handoff, not a claim of a deployed service.
+The original Fly.io staging and production plan was not run. The current Render setup and required environment variables are documented in the Render guide linked above.
 
 ## Topology
 
@@ -63,7 +65,7 @@ Trial accounts restrict verified destinations. Commercial India outbound calling
 
 ## CI/CD and checks
 
-`ci.yml`: Node/pnpm install, typecheck, lint, unit + Postgres integration tests, build, migration/seed, browser E2E and Docker build. `deploy.yml`: main → staging; prod uses a separate GitHub environment. **Configure required reviewers on the `prod` environment**: naming an environment in YAML does not itself enforce approval. Configure branch protection to require CI before merging to main. Do not push to main until account settings are in place.
+`ci.yml` runs Node/pnpm installation, typecheck, lint, unit and Postgres integration tests, build, migration/seed, browser E2E tests, and a Docker build. Render handles deployment from GitHub. The former Fly.io `deploy.yml` workflow was removed because this repository has no Fly app or token configured.
 
 ```sh
 SMOKE_BASE_URL=https://<staging-host> pnpm smoke

@@ -29,7 +29,7 @@ jobs:
       - run: pnpm db:migrate && pnpm seed
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm start > /tmp/caller.log 2>&1 &
-      - run: node scripts/wait-ready.mjs
+      - run: curl --fail --silent --show-error --retry 30 --retry-connrefused --retry-delay 2 http://localhost:3000/readyz
       - run: pnpm test:e2e
       - run: docker build -t caller-ci .
       - uses: actions/upload-artifact@v4

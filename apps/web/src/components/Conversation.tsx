@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Check, Headphones, Mic, Square } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { AudioLines, Check, Headphones, Mic, Square } from 'lucide-react';
 import type { CallResult, Turn } from '../../../../packages/shared/src/index.js';
 import { BrowserAudio } from '../browser-audio.js';
 import { wsUrl } from '../api.js';
@@ -370,105 +370,178 @@ export function ConversationDrawer({
   );
 }
 export function BrowserTest({ campaign, onClose }: { campaign: CampaignRow; onClose: () => void }) {
-  const { providers, notify } = useApp(),
+  const { providers } = useApp(),
     live = useLive(),
     [status, setStatus] = useState('Ready when you are.'),
     [id, setId] = useState(''),
     [started, setStarted] = useState(false),
-    [text, setText] = useState(''),
-    [client, setClient] = useState<BrowserAudio>();
+    [text, setText] = useState('');
+  const client = useRef<BrowserAudio | null>(null);
   const state = useMemo(() => liveState(live.events, id), [live.events, id]);
   useEffect(() => {
     if (status === 'Call ended') {
-      setStarted(false);
       refreshResults();
     }
   }, [status]);
-  useEffect(
-    () => () => {
-      client?.end();
-    },
-    [client],
-  );
+  useEffect(() => () => {
+    const audio = client.current;
+    client.current = null;
+    audio?.end();
+  }, []);
+  const failed = /failed|could not|closed before|denied|permission/i.test(status);
   return (
     <Drawer title="Browser test call" wide onClose={onClose}>
-      <div className="browser-controls">
-        <div>
-          <div className="chips">
-            <Chip>
-              {providers?.simulation ? 'Simulation · silent mock speech' : 'Browser test call'}
-            </Chip>
-            {campaign.data.sample && <Chip>Sample</Chip>}
+      <div className={`browser-session ${started && id ? 'active' : ''}`}>
+        <div className="browser-session-main">
+          <span className="browser-session-icon">
+            <Headphones size={25} />
+          </span>
+          <div>
+            <span className="eyebrow">
+              {providers?.simulation ? 'SCRIPTED PRACTICE' : 'LIVE VOICE TEST'}
+            </span>
+            <h3>{started && id ? 'Conversation in progress' : 'Talk to your agent'}</h3>
+            <p>
+              {providers?.simulation
+                ? 'Try the conversation with typed replies. No microphone or phone number is used.'
+                : 'Use your microphone to speak with the agent. No phone number is dialed.'}
+            </p>
           </div>
-          <p className="browser-status" role="status" style={{ marginTop: 12 }}>
-            <Headphones size={14} /> {status}
-          </p>
         </div>
-        {!started ? (
-          <Button
-            kind="primary"
-            disabled={!providers}
-            onClick={() => {
-              const audio = new BrowserAudio(setStatus, setId);
-              setClient(audio);
-              setStarted(true);
-              void audio.start(campaign.id, !!providers?.simulation).catch((e) => {
-                notify(e.message);
-                setStatus('Could not start. Check microphone permission and voice settings.');
-                setStarted(false);
-              });
-            }}
+        <div className="browser-session-controls">
+          <span
+            className={`browser-connection ${failed ? 'error' : started && id ? 'connected' : ''}`}
+            role="status"
           >
-            <Mic size={16} />
-            Start {providers?.simulation ? 'simulation' : 'test call'}
-          </Button>
+            <span className="browser-connection-dot" /> {status}
+          </span>
+          {!started ? (
+            <Button
+              kind="primary"
+              disabled={!providers}
+              onClick={() => {
+                setId('');
+                setStatus('Connecting to your agent…');
+                setStarted(true);
+                const audio = new BrowserAudio(
+                  (next) => {
+                    if (client.current !== audio) return;
+                    setStatus(next);
+                    if (next === 'Call ended' || /failed|could not|closed before|denied|permission/i.test(next)) {
+                      setStarted(false);
+                      client.current = null;
+                      audio.end();
+                    }
+                  },
+                  (callId) => {
+                    if (client.current === audio) setId(callId);
+                  },
+                );
+                client.current = audio;
+                void audio.start(campaign.id, !!providers?.simulation).catch((error) => {
+                  if (client.current !== audio) return;
+                  const message =
+                    error instanceof Error && error.name === 'NotAllowedError'
+                      ? 'Microphone access was denied. Allow it in your browser and try again.'
+                      : error instanceof Error
+                        ? error.message
+                        : 'Browser test could not start.';
+                  setStatus(message);
+                  setStarted(false);
+                  audio.end();
+                });
+              }}
+            >
+              <Mic size={16} />
+              {providers?.simulation ? 'Start practice' : 'Start conversation'}
+            </Button>
+          ) : (
+            <Button
+              onClick={() => {
+                const audio = client.current;
+                client.current = null;
+                audio?.end();
+                setStarted(false);
+                setStatus('Call ended');
+              }}
+            >
+              <Square size={16} />
+              End conversation
+            </Button>
+          )}
+        </div>
+      </div>
+      {failed && (
+        <p className="field-error browser-call-error" role="alert">
+          {status}
+        </p>
+      )}
+      <div className="browser-conversation-grid">
+        <div className="browser-transcript-panel">
+          <div className="browser-panel-title">
+            <div>
+              <span className="eyebrow">YOUR CONVERSATION</span>
+              <h3>What you and the agent say</h3>
+            </div>
+            <AudioLines size={21} />
+          </div>
+          <PhoneTranscript
+            turns={state.turns}
+            languages={state.result?.languages ?? campaign.data.languages}
+            tools={state.tools}
+            live
+          />
+          {providers?.simulation && started && !!id && (
+            <form
+              className="simulation-input"
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (text.trim()) {
+                  client.current?.text(text.trim());
+                  setText('');
+                }
+              }}
+            >
+              <Input
+                aria-label="Simulated caller response"
+                value={text}
+                onChange={(event) => setText(event.target.value)}
+                placeholder="Type your reply to the agent"
+              />
+              <Button type="submit" disabled={!text.trim()}>
+                Send reply
+              </Button>
+            </form>
+          )}
+          {live.error && <p className="helper">{live.error}</p>}
+        </div>
+        {state.result || Object.keys(state.fields).length ? (
+          <LeadCard
+            result={state.result}
+            fields={state.fields}
+            name="Browser test call"
+            languages={campaign.data.languages}
+            live={started}
+          />
         ) : (
-          <Button onClick={() => client?.end()}>
-            <Square size={16} />
-            End call
-          </Button>
+          <Card className="browser-guidance">
+            <span className="eyebrow">{started && id ? 'YOUR PRACTICE SESSION' : 'BEFORE YOU BEGIN'}</span>
+            <h3>{started && id ? 'Keep the conversation going' : 'A simple way to try your agent'}</h3>
+            <p>
+              {started && id
+                ? providers?.simulation
+                  ? 'Type your reply below the transcript. Your agent will respond here.'
+                  : 'Speak naturally into your microphone. Your agent and transcript will update here.'
+                : providers?.simulation
+                  ? 'Start practice, then type a reply when the agent asks a question.'
+                  : 'Allow microphone access, listen to the introduction, and answer naturally.'}
+            </p>
+            <div><span>01</span> {started && id ? 'Conversation started' : 'Start the conversation'}</div>
+            <div><span>02</span> Reply to the agent</div>
+            <div><span>03</span> Review the saved result</div>
+          </Card>
         )}
       </div>
-      <p className="helper">
-        {providers?.simulation
-          ? 'This is a scripted text test. No live Gnani audio or microphone is used.'
-          : 'Your microphone uses Gnani speech and the configured dialogue model. No phone number is needed.'}
-      </p>
-      <div className="conversation-grid" style={{ marginTop: 24 }}>
-        <PhoneTranscript
-          turns={state.turns}
-          languages={state.result?.languages ?? campaign.data.languages}
-          tools={state.tools}
-          live
-        />
-        <LeadCard
-          result={state.result}
-          fields={state.fields}
-          name="Browser test call"
-          languages={campaign.data.languages}
-          live={started}
-        />
-      </div>
-      {providers?.simulation && started && (
-        <form
-          className="simulation-input"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (text.trim()) {
-              client?.text(text.trim());
-              setText('');
-            }
-          }}
-        >
-          <Input
-            aria-label="Simulated caller response"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Type a synthetic caller reply"
-          />
-          <Button type="submit">Send reply</Button>
-        </form>
-      )}
       <TechnicalDetails result={state.result} live={state} />
     </Drawer>
   );

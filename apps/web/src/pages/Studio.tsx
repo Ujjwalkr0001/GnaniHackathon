@@ -250,7 +250,7 @@ function StudioForm({ workflow }: { workflow: WorkflowId }) {
       setStep(0);
       return;
     }
-    if (!consent) {
+    if (!browserOnly && !consent) {
       setError('Confirm consent before starting a call.');
       return;
     }
@@ -678,10 +678,10 @@ function StudioForm({ workflow }: { workflow: WorkflowId }) {
               </div>
             </form>
             <div className="browser-test-option">
-              <span>Prefer to try it yourself first?</span>
+              <span>Try your agent here. No phone number or calling consent is needed.</span>
               <Button
                 type="button"
-                disabled={busy || !consent || !providers || pause || user.role !== 'admin'}
+                disabled={busy || !providers || pause || user.role !== 'admin'}
                 onClick={() => void place(true)}
               >
                 <Headphones size={16} />

@@ -1,10 +1,10 @@
 import React, { createContext, lazy, Suspense, useContext, useEffect, useState } from 'react';
 import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowUpRight, Plus, LogOut } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, LogOut } from 'lucide-react';
 import { api, setCsrf } from './api.js';
 import { PRODUCT_NAME } from './config.js';
 import { copy } from './strings.js';
-import { query, useData, type CampaignRow, type Providers } from './data.js';
+import { query, useData, type Providers } from './data.js';
 import { Button, Card, Drawer, Field, Input, Skeleton, Toast } from './ui/index.js';
 import { Brand } from './components/Brand.js';
 import VoiceVisual from './components/VoiceVisual.js';
@@ -144,12 +144,7 @@ function Shell({
 }) {
   const location = useLocation(),
     providers = useData<Providers>('/providers'),
-    settings = useData<{ kill_switch: boolean }>('/settings'),
-    campaigns = useData<CampaignRow[]>('/campaigns');
-  const wizard =
-    location.pathname.includes('/new') ||
-    location.pathname.endsWith('/edit') ||
-    location.pathname.startsWith('/agents/');
+    settings = useData<{ kill_switch: boolean }>('/settings');
   return (
     <Context.Provider value={{ ...useApp(), providers: providers.data }}>
       <a className="sr-only skip-link" href="#main">
@@ -174,14 +169,6 @@ function Shell({
             ))}
           </nav>
           <div className="header-actions">
-            {!wizard &&
-              user.role === 'admin' &&
-              !(location.pathname === '/campaigns' && campaigns.data?.length === 0) && (
-                <Link className="btn btn-primary" to="/workspace#workflows">
-                  <Plus size={16} />
-                  Create agent
-                </Link>
-              )}
             <details className="user-menu">
               <summary aria-label="Account menu">{user.email[0].toUpperCase()}</summary>
               <div className="user-dropdown">

@@ -12,22 +12,29 @@ export class BrowserAudio {
   private source?: MediaStreamAudioSourceNode;
   private queueAt = 0;
   private active: AudioBufferSourceNode[] = [];
+  private failed = false;
+  private connected = false;
   constructor(
     private onStatus: (s: string) => void,
     private onCall: (id: string) => void,
   ) {}
   async start(campaignId: string, simulation: boolean) {
-    this.context = new AudioContext();
-    await this.context.resume();
     if (!simulation) {
-      this.stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          channelCount: 1,
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
-      });
+      this.context = new AudioContext();
+      await this.context.resume();
+      try {
+        this.stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            channelCount: 1,
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+        });
+      } catch (error) {
+        this.dispose();
+        throw error;
+      }
       this.source = this.context.createMediaStreamSource(this.stream);
       // ScriptProcessor is broadly supported; no remote code/worklet blobs required. Output stays silent.
       this.processor = this.context.createScriptProcessor(4096, 1, 1);
@@ -54,15 +61,26 @@ export class BrowserAudio {
     this.socket = new WebSocket(wsUrl(`/ws/browser/${campaignId}`));
     this.socket.onopen = () => this.socket?.send(JSON.stringify({ type: 'start' }));
     this.socket.onclose = () => {
-      this.onStatus('Call ended');
+      if (!this.failed)
+        this.onStatus(this.connected ? 'Call ended' : 'Connection closed before the call started.');
       this.dispose();
     };
-    this.socket.onerror = () => this.onStatus('Connection failed');
+    this.socket.onerror = () => {
+      this.failed = true;
+      this.onStatus('Connection failed. Check your browser connection and try again.');
+    };
     this.socket.onmessage = (e) => {
       const message = JSON.parse(e.data);
       if (message.type === 'ready') this.onStatus(message.note);
-      if (message.type === 'started') this.onCall(message.call_id);
-      if (message.type === 'error') this.onStatus(message.message);
+      if (message.type === 'started') {
+        this.connected = true;
+        this.onCall(message.call_id);
+        this.onStatus('Connected. Your conversation is ready.');
+      }
+      if (message.type === 'error') {
+        this.failed = true;
+        this.onStatus(`Browser test failed: ${message.message}`);
+      }
       if (message.type === 'clear') {
         for (const source of this.active) {
           try {
@@ -72,16 +90,16 @@ export class BrowserAudio {
           }
         }
         this.active = [];
-        this.queueAt = this.context!.currentTime;
+        if (this.context) this.queueAt = this.context.currentTime;
       }
-      if (message.type === 'audio') {
+      if (message.type === 'audio' && this.context) {
         const bytes = Uint8Array.from(atob(message.audio), (c) => c.charCodeAt(0)),
-          buffer = this.context!.createBuffer(1, bytes.length, 8000);
+          buffer = this.context.createBuffer(1, bytes.length, 8000);
         buffer.getChannelData(0).set(Array.from(bytes, decodeMuLaw));
-        const source = this.context!.createBufferSource();
+        const source = this.context.createBufferSource();
         source.buffer = buffer;
-        source.connect(this.context!.destination);
-        this.queueAt = Math.max(this.context!.currentTime + 0.025, this.queueAt);
+        source.connect(this.context.destination);
+        this.queueAt = Math.max(this.context.currentTime + 0.025, this.queueAt);
         source.start(this.queueAt);
         this.queueAt += buffer.duration;
         this.active.push(source);
@@ -95,7 +113,7 @@ export class BrowserAudio {
             if (this.socket?.readyState === 1)
               this.socket.send(JSON.stringify({ type: 'mark', name: message.name }));
           },
-          Math.max(0, (this.queueAt - this.context!.currentTime) * 1000),
+          Math.max(0, (this.queueAt - (this.context?.currentTime ?? 0)) * 1000),
         );
     };
   }
@@ -104,6 +122,7 @@ export class BrowserAudio {
   }
   end() {
     if (this.socket?.readyState === 1) this.socket.send(JSON.stringify({ type: 'end' }));
+    this.socket?.close(1000, 'Browser test ended');
     this.dispose();
   }
   private dispose() {

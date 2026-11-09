@@ -118,8 +118,8 @@ for (const width of [1440, 390]) {
     await shot('campaign');
     await page.getByRole('button', { name: 'Test in browser', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: 'Browser test call' });
-    await dialog.getByRole('button', { name: 'Start simulation', exact: true }).click();
-    await expect(dialog.getByText('Is this a good time?', { exact: false })).toBeVisible();
+    await dialog.getByRole('button', { name: 'Start practice', exact: true }).click();
+    await expect(dialog.getByText('Is this a good time', { exact: false })).toBeVisible();
     for (const [i, text] of [
       'Yes',
       'yes',
@@ -132,6 +132,7 @@ for (const width of [1440, 390]) {
       await expect(dialog.locator('.message.caller')).toHaveCount(i + 1);
       await page.waitForTimeout(450);
     }
+    await dialog.getByRole('button', { name: 'End conversation', exact: true }).click();
     await expect(dialog.getByText('Call ended', { exact: true })).toBeVisible();
     await expect(
       dialog.locator('details').filter({ has: page.locator('summary', { hasText: 'Details' }) }),

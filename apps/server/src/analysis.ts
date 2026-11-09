@@ -25,6 +25,8 @@ export async function analyzeCall(
       model: config.model,
       ...(config.provider === 'openai' && /^gpt-5\.4-mini(?:-|$)/.test(config.model)
         ? { reasoning_effort: 'none' } : {}),
+      ...(config.provider === 'groq' && config.model === 'qwen/qwen3.8-27b'
+        ? { reasoning_effort: 'none' } : {}),
       ...(config.provider === 'openai' ? { max_completion_tokens: 450 }
         : { temperature: 0.2, max_tokens: 450 }),
       response_format: { type: 'json_object' },

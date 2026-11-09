@@ -42,7 +42,7 @@ Compose database user is `caller`; the tests' default test URL uses `postgres`. 
 4. Set secrets separately for each app. Never paste real values into git, workflow YAML, screenshots, issue comments or logs.
 
 ```sh
-fly secrets set --app <staging-app> DATABASE_URL='<managed-direct-url>' PUBLIC_BASE_URL='https://<staging-host>' SESSION_SECRET='<random-32+-character-secret>' WEBHOOK_SIGNING_SECRET='<independent-random-secret>' GNANI_STT='<prisma-key>' GNANI_TTS='<timbre-key>' OPENAI_API_KEY='<openai-key>' SEED_ADMIN_EMAIL='<admin-email>' SEED_ADMIN_PASSWORD='<strong-initial-password>'
+fly secrets set --app <staging-app> DATABASE_URL='<managed-direct-url>' PUBLIC_BASE_URL='https://<staging-host>' SESSION_SECRET='<random-32+-character-secret>' WEBHOOK_SIGNING_SECRET='<independent-random-secret>' GNANI_STT='<prisma-key>' GNANI_TTS='<timbre-key>' GROQ_API_KEY='<groq-key>' SEED_ADMIN_EMAIL='<admin-email>' SEED_ADMIN_PASSWORD='<strong-initial-password>'
 fly secrets set --app <staging-app> TWILIO_ACCOUNT_SID='<sid>' TWILIO_AUTH_TOKEN='<token>' TWILIO_PHONE_NUMBER='<e164>'
 fly deploy --remote-only --app <staging-app>
 fly scale count 1 --app <staging-app>
@@ -51,7 +51,7 @@ fly status --app <staging-app>
 
 `fly.toml` runs `node scripts/migrate.mjs` as the release command. It contains health checks, non-autostopping configuration and a starting shared CPU/1 GB VM size; those are deployment settings, **not capacity claims**. The non-root image runs under `tini` and includes production dependencies only.
 
-Gnani speech is the default. `OPENAI_API_KEY` powers OpenAI `gpt-5.4-mini` dialogue and post-call notes. Explicit `DIALOGUE_PROVIDER`, `DIALOGUE_MODEL`, `DIALOGUE_URL` and `DIALOGUE_API_KEY` can select another compatible model. Text streaming and JSON-object support must be verified for a chosen model. Gnani still handles STT and TTS; no OpenAI audio model is used by this pipeline.
+Gnani speech is the default. `GROQ_API_KEY` powers Groq's Qwen 3.8 27B dialogue and post-call notes. Explicit `DIALOGUE_PROVIDER`, `DIALOGUE_MODEL`, `DIALOGUE_URL` and `DIALOGUE_API_KEY` can select another compatible model. Text streaming and JSON-object support must be verified for a chosen model. Gnani handles STT and TTS.
 
 For an explicitly simulated public staging demo only, additionally set `MOCK_MODE=true ALLOW_DEPLOYED_SIMULATION=true`. The UI must keep its simulation banner. Remove them and verify live providers before claiming a live demo.
 

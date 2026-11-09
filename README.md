@@ -4,7 +4,7 @@ For a free public simulation demo, use the [Render deployment guide](deploy/rend
 and the root `render.yaml` Blueprint. The repository already follows an
 `apps/` + `packages/` monorepo layout; deploy it from this Git root.
 
-**New frontend (8 November):** a light public landing page, five-workflow workspace, recruitment question builder, phone-call panel and requirements-coverage results. Open http://localhost:3000, then choose **Sign in**. See [frontend refresh](docs/FRONTEND_REFRESH.md) and [current screenshots](docs/screens-refresh/README.md). For local real calls, use the private `.env` Gnani STT/TTS, Groq and Twilio keys, set `MOCK_MODE=false`, and provide `TWILIO_WEBHOOK_BASE_URL` as an internet-reachable HTTPS origin that forwards voice, status and WebSocket media to the server. `PUBLIC_BASE_URL` remains the dashboard origin. Follow the [live calling guide](docs/LIVE_CALLING.md).
+**New frontend (8 November):** a light public landing page, five-workflow workspace, recruitment question builder, phone-call panel and requirements-coverage results. Open http://localhost:3000, then choose **Sign in**. See [frontend refresh](docs/FRONTEND_REFRESH.md) and [current screenshots](docs/screens-refresh/README.md). For local real calls, use the private `.env` Gnani STT/TTS, Groq and Twilio keys, set `MOCK_MODE=false`, and provide `TWILIO_WEBHOOK_BASE_URL` as an internet-reachable HTTPS origin that forwards voice, status and WebSocket media to the server. `PUBLIC_BASE_URL` remains the dashboard origin. Groq's Qwen 3.8 27B is the default dialogue model. Follow the [live calling guide](docs/LIVE_CALLING.md).
 
 Configure sales and HR calling campaigns with Gnani Prisma speech recognition, Gnani Timbre voice, and a separately configured dialogue LLM. The persistent server serves the React app, browser audio, Twilio Media Streams, authenticated APIs and a Postgres-backed queue.
 
@@ -18,7 +18,7 @@ Configure sales and HR calling campaigns with Gnani Prisma speech recognition, G
 | Persistence, tenant isolation, suppression, jobs, result outbox | Postgres + Drizzle + pg-boss | Local integration tests |
 | Gnani Prisma streaming STT | Documented headers, paced PCM frames, endpoint events | Local protocol mock; live NOT RUN |
 | Gnani Timbre v3.0 SSE TTS | Documented voice catalog, raw 8 kHz mu-law | HTTP protocol mock; live NOT RUN |
-| Dialogue | Sarvam-compatible text streaming by default, behind `DialogueClient` | Mock tests; live NOT RUN |
+| Dialogue | Groq Qwen 3.8 27B text streaming by default, behind `DialogueClient` | Mock tests; live NOT RUN |
 | Browser test call | Microphone PCM -> same conversation pipeline -> browser audio | Simulation/handshake tested; live audio NOT RUN |
 | Twilio voice, AMD, status, media | Signature checks, call/stream IDs, media/mark/clear | Synthetic Media Streams; real calls NOT RUN |
 | Webhook submission | Signed HTTPS, durable outbox, retry/dead letter/idempotency | Mock delivery tests; real receiver NOT RUN |

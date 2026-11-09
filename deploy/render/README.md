@@ -26,7 +26,9 @@ AICaller/
 3. In Render, choose **New > Blueprint**, select the GitHub repository and
    branch, and use its root `render.yaml`. The Blueprint creates one free Docker
    web service and prompts for `DATABASE_URL`, `SEED_ADMIN_EMAIL`, and
-   `SEED_ADMIN_PASSWORD`. Use a unique password of at least 12 characters.
+   `SEED_ADMIN_PASSWORD`, and `GROQ_API_KEY`. Use a unique admin password of at
+   least 12 characters. The Groq key stays in Render's private environment;
+   Render cannot read your local `.env` file.
 4. Let the deployment finish. The startup script applies the idempotent SQL
    migration before the app opens. The app creates the first admin account on
    startup. Visit the Render URL and log in with the seed credentials.
@@ -41,7 +43,7 @@ dashboard; never commit `.env` or `.env.local`.
 This free Blueprint is for a demo. Render free web services sleep after idle
 time, which interrupts active calling and background jobs. Live phone calls also
 need configured Gnani, dialogue, and Twilio credentials and available provider
-credit. Before using live mode, set `MOCK_MODE=false` and configure the provider
-environment variables described in `.env.example`; validate an actual consented
+credit. Before using live mode, set `MOCK_MODE=false` and configure the Gnani
+and Twilio environment variables described in `.env.example`; validate an actual consented
 call and the public HTTPS webhook URL. Do not present the simulated browser call
 as a live provider call.

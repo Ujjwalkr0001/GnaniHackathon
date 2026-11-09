@@ -70,6 +70,8 @@ export class CompatibleDialogue implements DialogueClient {
             ? { reasoning_effort: 'none' } : {}),
           ...(config.provider === 'groq' && /^openai\/gpt-oss-/.test(config.model)
             ? { reasoning_effort: 'low' } : {}),
+          ...(config.provider === 'groq' && config.model === 'qwen/qwen3.8-27b'
+            ? { reasoning_effort: 'none' } : {}),
           ...(config.provider === 'openai' ? { max_completion_tokens: 600 }
             : { temperature: 0.2, max_tokens: 600 }),
           stream: true,

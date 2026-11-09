@@ -3,7 +3,7 @@ export const gnaniSttKey = () => process.env.GNANI_STT || process.env.GNANI_API_
 export const gnaniTtsKey = () => process.env.GNANI_TTS || process.env.GNANI_API_KEY;
 
 export function dialogueConfig() {
-  const provider = process.env.DIALOGUE_PROVIDER || 'openai';
+  const provider = process.env.DIALOGUE_PROVIDER || 'groq';
   return {
     provider,
     key:
@@ -13,7 +13,7 @@ export function dialogueConfig() {
     model:
       process.env.DIALOGUE_MODEL ||
       (provider === 'openai' ? 'gpt-5.4-mini'
-        : provider === 'groq' ? 'openai/gpt-oss-20b' : 'sarvam-105b-conversations'),
+        : provider === 'groq' ? 'qwen/qwen3.8-27b' : 'sarvam-105b-conversations'),
     url:
       process.env.DIALOGUE_URL ||
       (provider === 'openai' ? 'https://api.openai.com/v1/chat/completions'

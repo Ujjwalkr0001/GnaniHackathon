@@ -24,6 +24,8 @@ services:
         sync: false
       - key: SEED_ADMIN_PASSWORD
         sync: false
+      - key: GROQ_API_KEY
+        sync: false
       - key: MOCK_MODE
         value: "true"
       - key: ALLOW_DEPLOYED_SIMULATION

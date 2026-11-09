@@ -1,6 +1,6 @@
 # ElevateBox Campaign Studio
 
-For a free public simulation demo, use the [Render deployment guide](deploy/render/README.md)
+For a Render deployment, use the [Render deployment guide](deploy/render/README.md)
 and the root `render.yaml` Blueprint. The repository already follows an
 `apps/` + `packages/` monorepo layout; deploy it from this Git root.
 

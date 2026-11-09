@@ -7,7 +7,6 @@ services:
     dockerContext: .
     dockerCommand: node deploy/render/start.mjs
     healthCheckPath: /readyz
-    maxShutdownDelaySeconds: 45
     envVars:
       - key: DATABASE_URL
         sync: false

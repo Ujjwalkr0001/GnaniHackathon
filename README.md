@@ -4,7 +4,7 @@ For a Render deployment, use the [Render deployment guide](deploy/render/README.
 and the root `render.yaml` Blueprint. The repository already follows an
 `apps/` + `packages/` monorepo layout; deploy it from this Git root.
 
-**New frontend (8 November):** a light public landing page, five-workflow workspace, recruitment question builder, phone-call panel and requirements-coverage results. Open http://localhost:3000, then choose **Sign in**. See [frontend refresh](docs/FRONTEND_REFRESH.md) and [current screenshots](docs/screens-refresh/README.md). For local real calls, use the private `.env` Gnani STT/TTS, Groq and Twilio keys, set `MOCK_MODE=false`, and provide `TWILIO_WEBHOOK_BASE_URL` as an internet-reachable HTTPS origin that forwards voice, status and WebSocket media to the server. `PUBLIC_BASE_URL` remains the dashboard origin. Groq's Qwen 3.8 27B is the default dialogue model. Follow the [live calling guide](docs/LIVE_CALLING.md).
+The app has a public landing page and a signed-in workspace for sales, marketing, customer care, recruitment, and appointments. It includes a campaign builder, browser test, phone-call panel, and saved conversation results. See the [frontend guide](docs/FRONTEND_REFRESH.md) and [screenshots](docs/screens-refresh/README.md).
 
 Configure sales and HR calling campaigns with Gnani Prisma speech recognition, Gnani Timbre voice, and a separately configured dialogue LLM. The persistent server serves the React app, browser audio, Twilio Media Streams, authenticated APIs and a Postgres-backed queue.
 
@@ -27,7 +27,7 @@ Configure sales and HR calling campaigns with Gnani Prisma speech recognition, G
 
 Gnani supplies speech in this custom pipeline; it does **not** decide the dialogue. The UI always names the configured text model. Current Gnani docs also describe Agent Builder APIs, but this application does not use those agents or claim Evon integration. The challenge excludes Agent Builder; see [official contest check](docs/CONTEST_RULES.md).
 
-## Quick start (PowerShell)
+## Local setup (PowerShell)
 
 Requires Node 22+, Docker and pnpm 10.28.0. Docker Compose uses port 54329 for local Postgres.
 
@@ -37,16 +37,24 @@ corepack prepare pnpm@10.28.0 --activate
 pnpm install --frozen-lockfile
 docker compose up -d postgres
 Copy-Item .env.example .env
-# Edit .env: local database URL, seed admin email/password, MOCK_MODE=true for offline demo.
+# Edit .env: set MOCK_MODE=true, SEED_ADMIN_EMAIL, and a 12+ character
+# SEED_ADMIN_PASSWORD. Keep the example's local DATABASE_URL and PUBLIC_BASE_URL.
 pnpm db:migrate
 pnpm seed
 pnpm build
 pnpm start
 ```
 
-Open http://localhost:3000. Offline mode is explicit, shows a simulation banner, and uses **silent mock TTS** plus scripted text input. It is never described as a live Gnani call. `pnpm dev` watches the server; `pnpm dev:web` starts Vite separately (for authenticated WebSockets, use the configured same-origin production build).
+Open http://localhost:3000 and choose **Sign in** with the `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` you set. `pnpm seed` creates fictional sales and HR campaigns and synthetic results; it requires `MOCK_MODE=true`. Offline mode shows a simulation banner and uses **silent mock TTS** plus scripted text input. It is never described as a live Gnani call. `pnpm dev` watches the server; `pnpm dev:web` starts Vite separately (for authenticated WebSockets, use the configured same-origin production build).
 
-For the complete local container: `docker compose up --build -d`, then `docker compose exec app node scripts/dist/seed.js`. The development-only default account is `demo@example.test` / `local-demo-passphrase`; override it before any public deployment. Production requires HTTPS and a 32+ character session secret. Do not publish development credentials.
+For a container-only local setup, run `docker compose up --build -d`, then `docker compose exec app node scripts/dist/seed.js`. Docker Compose supplies the development-only default account `demo@example.test` / `local-demo-passphrase`; override it before any public deployment. Production requires HTTPS and a 32+ character session secret. Do not publish development credentials.
+
+## Use the workspace
+
+1. Sign in, then choose a workflow from **Workspace**. The five cards open an agent setup flow; **Campaigns** also offers the sales and HR campaign builder.
+2. Enter the approved company or role details, select questions and languages, and review the agent preview. Use synthetic or consented contacts for tests.
+3. In offline mode, run a browser simulation and inspect the saved result in **Conversations**. Sample results are labelled and excluded from live metrics.
+4. Open **Settings > Connections** to see which live services have credentials configured. This does not verify provider health. For real browser or phone calls, set `MOCK_MODE=false` and supply Gnani STT/TTS and Groq credentials. Phone calls also need Twilio credentials and an internet-reachable HTTPS `TWILIO_WEBHOOK_BASE_URL` that forwards voice, status, and WebSocket media to the server. Keep `PUBLIC_BASE_URL` as the dashboard origin. Follow the [live calling guide](docs/LIVE_CALLING.md) before dialing.
 
 ## Architecture
 
